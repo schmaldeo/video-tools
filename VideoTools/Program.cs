@@ -1,5 +1,4 @@
-﻿using System.ComponentModel;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text;
 using Spectre.Console;
 
@@ -20,11 +19,15 @@ static class Program
 				.AddChoices([Options.Concatenate, Options.Reformat])
 		);
 
-		if (selection == Options.Concatenate)
+		switch (selection)
 		{
-			await HandleConcatenate();
+			case Options.Concatenate:
+				await HandleConcatenate();
+				break;
+			case Options.Reformat:
+				await HandleChangeFormat();
+				break;
 		}
-		// await ChangeFormat(new FileInfo("./vid1.mp4"), "mov");
 	}
 
 	private static async Task HandleConcatenate()
@@ -63,6 +66,28 @@ static class Program
 			new TextPrompt<string>("Output file name:"));
 
 		await Concatenate(paths, outputFileName);
+	}
+
+	// TODO add more formats
+	private static readonly string[] VideoFormats = ["mp4", "mov", "avi", "mkv", "webm"];
+
+	private static async Task HandleChangeFormat()
+	{
+		var fileName = AnsiConsole.Prompt(
+			new TextPrompt<string>("File path:")
+				.ValidationErrorMessage("[red]Invalid path[/]")
+				.Validate(path => Path.Exists(path) && Path.HasExtension(path)
+					? ValidationResult.Success()
+					: ValidationResult.Error())
+		);
+		
+		var extension = AnsiConsole.Prompt(
+			new TextPrompt<string>("File format:")
+				.ValidationErrorMessage("[red]Invalid file format[/]")
+				.Validate(input => VideoFormats.Any(format => format == input))
+		);
+		
+		await ChangeFormat(new FileInfo(fileName), extension);
 	}
 
 	private static async Task Concatenate(IEnumerable<FileInfo> files, string output)
