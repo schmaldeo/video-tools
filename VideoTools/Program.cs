@@ -1,26 +1,71 @@
-﻿using System.Diagnostics;
+﻿using System.ComponentModel;
+using System.Diagnostics;
 using System.Text;
+using Spectre.Console;
 
 namespace VideoTools;
 
 static class Program
 {
+	private enum Options
+	{
+		Concatenate,
+		Reformat,
+	}
 	public static async Task Main(string[] args)
 	{
-		try
+		var selection = AnsiConsole.Prompt(
+			new SelectionPrompt<Options>()
+				.Title("What do you want to do?")
+				.AddChoices([Options.Concatenate, Options.Reformat])
+		);
+
+		if (selection == Options.Concatenate)
 		{
-			var files = ParseFileInput(args).ToArray();
-			// await Concatenate(files, "loooo8.mp4");
-			await ChangeFormat(new FileInfo("./vid1.mp4"), "mp5");
+			await HandleConcatenate();
 		}
-		catch (ArgumentException e)
-		{
-			await Console.Error.WriteLineAsync(e.Message);
-			Environment.Exit(1);
-		}
+		// await ChangeFormat(new FileInfo("./vid1.mp4"), "mov");
 	}
 
-	private static async Task Concatenate(FileInfo[] files, string output)
+	private static async Task HandleConcatenate()
+	{
+		List<FileInfo> paths = [];
+		while (paths.Count < 2)
+		{
+			var prompt = AnsiConsole.Prompt(
+				new TextPrompt<string>("File path (empty if you want to stop adding):")
+					.ValidationErrorMessage("[red]Invalid path[/]")
+					.Validate(path =>
+					{
+						if (string.IsNullOrWhiteSpace(path))
+						{
+							return ValidationResult.Success();
+						}
+
+						return Path.Exists(path) && Path.HasExtension(path) ? ValidationResult.Success() : ValidationResult.Error();
+					})
+					.AllowEmpty()
+			);
+				
+			if (string.IsNullOrWhiteSpace(prompt))
+			{
+				if (paths.Count < 2)
+				{
+					Console.WriteLine("You need to enter at least 2 files.");
+					continue;
+				}
+				break;
+			}
+			paths.Add(new FileInfo(prompt));
+		}
+
+		var outputFileName = AnsiConsole.Prompt(
+			new TextPrompt<string>("Output file name:"));
+
+		await Concatenate(paths, outputFileName);
+	}
+
+	private static async Task Concatenate(IEnumerable<FileInfo> files, string output)
 	{
 		StringBuilder commandBuilder = new();
 		StringBuilder filterBuilder = new("-filter_complex \"");
@@ -31,7 +76,7 @@ static class Program
 			filterBuilder.Append($"[{index}:v:0][{index}:a:0]");
 		}
 
-		filterBuilder.Append($"concat=n={files.Length}:v=1:a=1[outv][outa]\" ");
+		filterBuilder.Append($"concat=n={files.Count()}:v=1:a=1[outv][outa]\" ");
 		commandBuilder.Append(filterBuilder);
 		commandBuilder.Append($"-map \"[outv]\" -map \"[outa]\" {output}");
 
@@ -61,18 +106,5 @@ static class Program
 		};
 		process.Start();
 		await process.WaitForExitAsync();
-	}
-
-	private static IEnumerable<FileInfo> ParseFileInput(IEnumerable<string> input)
-	{
-		return input.Select(file =>
-		{
-			if (Path.Exists(file))
-			{
-				return new FileInfo(file);
-			}
-
-			throw new ArgumentException($"File {file} not found");
-		});
 	}
 }
