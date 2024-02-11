@@ -4,14 +4,12 @@ using Spectre.Console;
 
 namespace VideoTools;
 
-static class Program
+internal static class Program
 {
-	private enum Options
-	{
-		Concatenate,
-		Reformat,
-	}
-	public static async Task Main(string[] args)
+	// TODO add more formats
+	private static readonly string[] VideoFormats = ["mp4", "mov", "avi", "mkv", "webm"];
+
+	public static async Task Main()
 	{
 		var selection = AnsiConsole.Prompt(
 			new SelectionPrompt<Options>()
@@ -40,16 +38,13 @@ static class Program
 					.ValidationErrorMessage("[red]Invalid path[/]")
 					.Validate(path =>
 					{
-						if (string.IsNullOrWhiteSpace(path))
-						{
-							return ValidationResult.Success();
-						}
+						if (string.IsNullOrWhiteSpace(path)) return ValidationResult.Success();
 
 						return Path.Exists(path) && Path.HasExtension(path) ? ValidationResult.Success() : ValidationResult.Error();
 					})
 					.AllowEmpty()
 			);
-				
+
 			if (string.IsNullOrWhiteSpace(prompt))
 			{
 				if (paths.Count < 2)
@@ -57,8 +52,10 @@ static class Program
 					Console.WriteLine("You need to enter at least 2 files.");
 					continue;
 				}
+
 				break;
 			}
+
 			paths.Add(new FileInfo(prompt));
 		}
 
@@ -67,9 +64,6 @@ static class Program
 
 		await Concatenate(paths, outputFileName);
 	}
-
-	// TODO add more formats
-	private static readonly string[] VideoFormats = ["mp4", "mov", "avi", "mkv", "webm"];
 
 	private static async Task HandleChangeFormat()
 	{
@@ -80,13 +74,13 @@ static class Program
 					? ValidationResult.Success()
 					: ValidationResult.Error())
 		);
-		
+
 		var extension = AnsiConsole.Prompt(
 			new TextPrompt<string>("File format:")
 				.ValidationErrorMessage("[red]Invalid file format[/]")
 				.Validate(input => VideoFormats.Any(format => format == input))
 		);
-		
+
 		await ChangeFormat(new FileInfo(fileName), extension);
 	}
 
@@ -94,7 +88,7 @@ static class Program
 	{
 		StringBuilder commandBuilder = new();
 		StringBuilder filterBuilder = new("-filter_complex \"");
-		
+
 		foreach (var (file, index) in files.Select((val, i) => (val, i)))
 		{
 			commandBuilder.Append($"-i {file} ");
@@ -106,8 +100,8 @@ static class Program
 		commandBuilder.Append($"-map \"[outv]\" -map \"[outa]\" {output}");
 
 		Console.WriteLine(commandBuilder.ToString());
-		
-		var process = new Process 
+
+		var process = new Process
 		{
 			StartInfo = new ProcessStartInfo
 			{
@@ -121,7 +115,7 @@ static class Program
 
 	private static async Task ChangeFormat(FileInfo file, string outputFormat)
 	{
-		var process = new Process 
+		var process = new Process
 		{
 			StartInfo = new ProcessStartInfo
 			{
@@ -131,5 +125,11 @@ static class Program
 		};
 		process.Start();
 		await process.WaitForExitAsync();
+	}
+
+	private enum Options
+	{
+		Concatenate,
+		Reformat
 	}
 }
