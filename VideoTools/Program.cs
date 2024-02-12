@@ -4,12 +4,23 @@ namespace VideoTools;
 
 internal static class Program
 {
-	// TODO download ffmpeg if not present
 	// TODO add more formats
 	private static readonly string[] VideoFormats = ["mp4", "mov", "avi", "mkv", "webm"];
 
 	public static async Task Main()
 	{
+		// checks if ffmpeg is present in installation directory and if not, downloads it
+		if (!Ffmpeg.IsInstalled())
+		{
+			await AnsiConsole.Status()
+				.StartAsync("ffmpeg not found, installing...", ctx => 
+				{
+					ctx.Spinner(Spinner.Known.Aesthetic);
+					ctx.SpinnerStyle(Style.Parse("green"));
+					return Ffmpeg.Download();
+				});
+		}
+
 		// initial prompt
 		var selection = AnsiConsole.Prompt(
 			new SelectionPrompt<Options>()
