@@ -1,10 +1,13 @@
 ﻿using System.Diagnostics;
 using System.Text;
+using System.IO.Compression;
 
 namespace VideoTools;
 
 public class Ffmpeg
 {
+	private static readonly string ExePath = Path.GetDirectoryName(Environment.ProcessPath) ?? ".";
+	
 	public static async Task Concatenate(IEnumerable<FileInfo> files, string output)
 	{
 		StringBuilder commandBuilder = new();
@@ -52,5 +55,43 @@ public class Ffmpeg
 		};
 		process.Start();
 		await process.WaitForExitAsync();
+	}
+
+	public static bool IsInstalled()
+	{
+		return File.Exists($"{ExePath}/ffmpeg.exe") && File.Exists($"{ExePath}/ffprobe.exe");
+	}
+
+	public static async Task Download()
+	{
+		HttpClient httpClient = new();
+		var uri = new Uri(
+			"https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip");
+		
+		var response = await httpClient.GetAsync(uri);
+
+		// downloading zipped ffmpeg
+		var zipPath = $"{ExePath}/ffmpeg.zip";
+		var fs = new FileStream(zipPath, FileMode.CreateNew);
+		await Task.Run(() => response.Content.CopyToAsync(fs))
+			.ContinueWith(_ =>
+			{
+				response.Dispose();
+				fs.Dispose();
+				ZipFile.ExtractToDirectory(zipPath, ExePath);
+			});
+		
+		// moving ffmpeg executables to the root of the application
+		var unzippedPath = $"{ExePath}/ffmpeg-master-latest-win64-gpl";
+		var files = Directory.GetFiles($"{unzippedPath}/bin");
+		foreach (var file in files)
+		{
+			var fileName = Path.GetFileName(file);
+			File.Move(file, $"{ExePath}/{fileName}");
+		}
+		
+		// clean up
+		Directory.Delete(unzippedPath, true);
+		File.Delete(zipPath);
 	}
 }
