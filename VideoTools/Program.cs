@@ -6,6 +6,7 @@ namespace VideoTools;
 
 internal static class Program
 {
+	// TODO download ffmpeg if not present
 	// TODO add more formats
 	private static readonly string[] VideoFormats = ["mp4", "mov", "avi", "mkv", "webm"];
 
@@ -33,10 +34,11 @@ internal static class Program
 	{
 		List<FileInfo> paths = [];
 		// prompt repeatedly asking for files to concatenate until there's at least 2 of them
-		while (paths.Count < 2)
+		Console.WriteLine("Please enter a path to the file you want to add or press enter if you want to stop adding.");
+		while (true)
 		{
 			var prompt = AnsiConsole.Prompt(
-				new TextPrompt<string>("File path (empty if you want to stop adding):")
+				new TextPrompt<string>("File path:")
 					.ValidationErrorMessage("[red]Invalid path[/]")
 					.Validate(path =>
 					{
@@ -105,7 +107,7 @@ internal static class Program
 			index++;
 		}
 
-		filterBuilder.Append($"concat=n={index + 1}:v=1:a=1[outv][outa]\" ");
+		filterBuilder.Append($"concat=n={index}:v=1:a=1[outv][outa]\" ");
 		commandBuilder.Append(filterBuilder);
 		commandBuilder.Append($"-map \"[outv]\" -map \"[outa]\" {output}");
 
@@ -117,6 +119,7 @@ internal static class Program
 				Arguments = commandBuilder.ToString()
 			}
 		};
+		Console.WriteLine(commandBuilder.ToString());
 		process.Start();
 		await process.WaitForExitAsync();
 	}
