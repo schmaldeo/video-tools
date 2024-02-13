@@ -94,4 +94,36 @@ public class Ffmpeg
 		Directory.Delete(unzippedPath, true);
 		File.Delete(zipPath);
 	}
+
+	
+	public static async Task<List<string>> GetSupportedFormats()
+	{
+		var process = new Process
+		{
+			StartInfo = new ProcessStartInfo
+			{
+				FileName = "./ffmpeg.exe",
+				Arguments = $"-formats",
+				RedirectStandardOutput = true,
+				CreateNoWindow = true,
+				UseShellExecute = false
+			}
+		};
+		process.Start();
+		// skip first few lines as they are just explaining what means what
+		for (int i = 0; i < 4; i++)
+		{
+			await process.StandardOutput.ReadLineAsync();
+		}
+
+		List<string> formats = [];
+		while (!process.StandardOutput.EndOfStream)
+		{
+			var line = await process.StandardOutput.ReadLineAsync();
+			var split = line!.Split();
+			formats.Add(split[3]);
+		}
+		await process.WaitForExitAsync();
+		return formats;
+	}
 }

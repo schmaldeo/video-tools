@@ -20,14 +20,13 @@ internal static class Program
 					return Ffmpeg.Download();
 				});
 		}
-
+		
 		// initial prompt
 		var selection = AnsiConsole.Prompt(
 			new SelectionPrompt<Options>()
 				.Title("What do you want to do?")
 				.AddChoices([Options.Concatenate, Options.Reformat])
 		);
-
 		switch (selection)
 		{
 			case Options.Concatenate:
@@ -89,10 +88,11 @@ internal static class Program
 					: ValidationResult.Error())
 		);
 
+		var formats = await Ffmpeg.GetSupportedFormats();
 		var extension = AnsiConsole.Prompt(
 			new TextPrompt<string>("File format:")
 				.ValidationErrorMessage("[red]Invalid file format[/]")
-				.Validate(input => VideoFormats.Any(format => format == input))
+				.Validate(input => formats.Any(x => x == input.Trim()))
 		);
 
 		await Ffmpeg.ChangeFormat(new FileInfo(fileName), extension);
