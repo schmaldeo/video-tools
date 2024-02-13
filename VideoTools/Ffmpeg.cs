@@ -75,6 +75,20 @@ public class Ffmpeg
 		await process.WaitForExitAsync();
 	}
 
+	public static async Task RemoveAudio(FileInfo file)
+	{
+		var process = new Process
+		{
+			StartInfo = new ProcessStartInfo
+			{
+				FileName = "./ffmpeg.exe",
+				Arguments = $"-i {file.FullName} -an {Path.GetFileNameWithoutExtension(file.FullName)}-nosound{Path.GetExtension(file.FullName)}"
+			}
+		};
+		process.Start();
+		await process.WaitForExitAsync();
+	}
+
 	public static bool IsInstalled()
 	{
 		return File.Exists($"{ExePath}/ffmpeg.exe") && File.Exists($"{ExePath}/ffprobe.exe");
@@ -112,7 +126,6 @@ public class Ffmpeg
 		Directory.Delete(unzippedPath, true);
 		File.Delete(zipPath);
 	}
-
 	
 	public static async Task<List<string>> GetSupportedFormats()
 	{

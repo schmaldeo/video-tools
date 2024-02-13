@@ -1,4 +1,6 @@
-﻿using Spectre.Console;
+﻿using System.ComponentModel;
+using Spectre.Console;
+using EnumsNET;
 
 namespace VideoTools;
 
@@ -17,12 +19,22 @@ internal static class Program
 					return Ffmpeg.Download();
 				});
 		}
+
+		Console.WriteLine(Options.Concatenate.AsString(EnumFormat.Description));
 		
+		
+		// TODO map some strings to those options so it displays it in a more user-friendly manner
 		// initial prompt
 		var selection = AnsiConsole.Prompt(
 			new SelectionPrompt<Options>()
 				.Title("What do you want to do?")
-				.AddChoices([Options.Concatenate, Options.Reformat, Options.ExtractAudio])
+				.AddChoices([Options.Concatenate, Options.Reformat, Options.ExtractAudio, Options.RemoveAudio])
+				// .AddChoices([
+				// 	Options.Concatenate.AsString(EnumFormat.Description),
+				// 	Options.Reformat.AsString(EnumFormat.Description),
+				// 	Options.ExtractAudio.AsString(EnumFormat.Description),
+				// 	Options.RemoveAudio.AsString(EnumFormat.Description),
+				// ])
 		);
 		switch (selection)
 		{
@@ -34,6 +46,9 @@ internal static class Program
 				break;
 			case Options.ExtractAudio:
 				await HandleExtractAudio();
+				break;
+			case Options.RemoveAudio:
+				await HandleRemoveAudio();
 				break;
 		}
 	}
@@ -99,6 +114,13 @@ internal static class Program
 		await Ffmpeg.ExtractAudio(file);
 	}
 
+	private static async Task HandleRemoveAudio()
+	{
+		var file = GetFileFromConsole();
+
+		await Ffmpeg.RemoveAudio(file);
+	}
+
 	private static FileInfo GetFileFromConsole()
 	{
 		var fileName = AnsiConsole.Prompt(
@@ -113,8 +135,13 @@ internal static class Program
 
 	private enum Options
 	{
+		[Description("Concatenate files")]
 		Concatenate,
+		[Description("Change format")]
 		Reformat,
-		ExtractAudio
+		[Description("Extract audio to mp3")]
+		ExtractAudio,
+		[Description("Remove audio from a video")]
+		RemoveAudio
 	}
 }
