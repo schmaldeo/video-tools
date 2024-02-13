@@ -4,9 +4,6 @@ namespace VideoTools;
 
 internal static class Program
 {
-	// TODO add more formats
-	private static readonly string[] VideoFormats = ["mp4", "mov", "avi", "mkv", "webm"];
-
 	public static async Task Main()
 	{
 		// checks if ffmpeg is present in installation directory and if not, downloads it
@@ -25,7 +22,7 @@ internal static class Program
 		var selection = AnsiConsole.Prompt(
 			new SelectionPrompt<Options>()
 				.Title("What do you want to do?")
-				.AddChoices([Options.Concatenate, Options.Reformat])
+				.AddChoices([Options.Concatenate, Options.Reformat, Options.ExtractAudio])
 		);
 		switch (selection)
 		{
@@ -34,6 +31,9 @@ internal static class Program
 				break;
 			case Options.Reformat:
 				await HandleChangeFormat();
+				break;
+			case Options.ExtractAudio:
+				await HandleExtractAudio();
 				break;
 		}
 	}
@@ -80,6 +80,27 @@ internal static class Program
 
 	private static async Task HandleChangeFormat()
 	{
+		var file = GetFileFromConsole();
+
+		var formats = await Ffmpeg.GetSupportedFormats();
+		var extension = AnsiConsole.Prompt(
+			new TextPrompt<string>("File format:")
+				.ValidationErrorMessage("[red]Invalid file format[/]")
+				.Validate(input => formats.Any(x => x == input.Trim()) && input.Trim() != string.Empty)
+		);
+
+		await Ffmpeg.ChangeFormat(file, extension);
+	}
+
+	private static async Task HandleExtractAudio()
+	{
+		var file = GetFileFromConsole();
+
+		await Ffmpeg.ExtractAudio(file);
+	}
+
+	private static FileInfo GetFileFromConsole()
+	{
 		var fileName = AnsiConsole.Prompt(
 			new TextPrompt<string>("File path:")
 				.ValidationErrorMessage("[red]Invalid path[/]")
@@ -87,20 +108,13 @@ internal static class Program
 					? ValidationResult.Success()
 					: ValidationResult.Error())
 		);
-
-		var formats = await Ffmpeg.GetSupportedFormats();
-		var extension = AnsiConsole.Prompt(
-			new TextPrompt<string>("File format:")
-				.ValidationErrorMessage("[red]Invalid file format[/]")
-				.Validate(input => formats.Any(x => x == input.Trim()))
-		);
-
-		await Ffmpeg.ChangeFormat(new FileInfo(fileName), extension);
+		return new FileInfo(fileName);
 	}
 
 	private enum Options
 	{
 		Concatenate,
-		Reformat
+		Reformat,
+		ExtractAudio
 	}
 }

@@ -57,6 +57,24 @@ public class Ffmpeg
 		await process.WaitForExitAsync();
 	}
 
+	/// <summary>
+	/// Tries to extract audio in MP3 format out of a video.
+	/// </summary>
+	/// <param name="file"><c>FileInfo</c> of the video</param>
+	public static async Task ExtractAudio(FileInfo file)
+	{
+		var process = new Process
+		{
+			StartInfo = new ProcessStartInfo
+			{
+				FileName = "./ffmpeg.exe",
+				Arguments = $"-i {file.FullName} {Path.GetFileNameWithoutExtension(file.FullName)}.mp3"
+			}
+		};
+		process.Start();
+		await process.WaitForExitAsync();
+	}
+
 	public static bool IsInstalled()
 	{
 		return File.Exists($"{ExePath}/ffmpeg.exe") && File.Exists($"{ExePath}/ffprobe.exe");
@@ -121,7 +139,8 @@ public class Ffmpeg
 		{
 			var line = await process.StandardOutput.ReadLineAsync();
 			var split = line!.Split();
-			formats.Add(split[3]);
+			// formatting this output is really funky, maybe there's a better way to do it
+			formats.Add(split[2] == "E" ? split[3] : split[2]);
 		}
 		await process.WaitForExitAsync();
 		return formats;
