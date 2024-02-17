@@ -8,7 +8,15 @@ public class Ffmpeg
 {
 	private static readonly string ExePath = Path.GetDirectoryName(Environment.ProcessPath) ?? ".";
 	
-	public static async Task Concatenate(IEnumerable<FileInfo> files, string output)
+	/// <summary>
+	/// Concatenates two or more videos of any supported format into one of any supported format.
+	/// </summary>
+	/// <param name="files"><see cref="IEnumerable{T}">IEnumerable</see> of <see cref="FileInfo">FileInfo</see>'s to be
+	///	concatenated. It is recommended that you use a collection that guarantees order as the function just uses a
+	/// <c>foreach</c> loop
+	/// </param>
+	/// <param name="output">Output filename (must include extension)</param>
+	public static async Task Concat(IEnumerable<FileInfo> files, string output)
 	{
 		StringBuilder commandBuilder = new();
 		StringBuilder filterBuilder = new("-filter_complex \"");
@@ -43,6 +51,11 @@ public class Ffmpeg
 		await process.WaitForExitAsync();
 	}
 
+	/// <summary>
+	/// Converts a file from one format to another.
+	/// </summary>
+	/// <param name="file"><see cref="FileInfo">FileInfo</see> of the file to be converted</param>
+	/// <param name="outputFormat">Filename extension of the output</param>
 	public static async Task ChangeFormat(FileInfo file, string outputFormat)
 	{
 		var process = new Process
@@ -58,7 +71,7 @@ public class Ffmpeg
 	}
 
 	/// <summary>
-	/// Tries to extract audio in MP3 format out of a video.
+	/// Extracts audio in MP3 format out of a video.
 	/// </summary>
 	/// <param name="file"><c>FileInfo</c> of the video</param>
 	public static async Task ExtractAudio(FileInfo file)
@@ -75,6 +88,11 @@ public class Ffmpeg
 		await process.WaitForExitAsync();
 	}
 
+	/// <summary>
+	/// Removes audio from a video file and saves it in the same directory, with the same extension and <c>-nosound</c>
+	/// added to its name.
+	/// </summary>
+	/// <param name="file"><see cref="FileInfo">FileInfo</see> of the file on which you want to perform the operation</param>
 	public static async Task RemoveAudio(FileInfo file)
 	{
 		var process = new Process
@@ -89,11 +107,18 @@ public class Ffmpeg
 		await process.WaitForExitAsync();
 	}
 
+	/// <summary>
+	/// Checks if ffmpeg is present in the process' directory.
+	/// </summary>
+	/// <returns>A boolean indicating whether ffmpeg exists in process' directory</returns>
 	public static bool IsInstalled()
 	{
 		return File.Exists($"{ExePath}/ffmpeg.exe") && File.Exists($"{ExePath}/ffprobe.exe");
 	}
 
+	/// <summary>
+	/// Downloads ffmpeg from github, and unzips the executables into process' directory.
+	/// </summary>
 	public static async Task Download()
 	{
 		HttpClient httpClient = new();
@@ -127,6 +152,10 @@ public class Ffmpeg
 		File.Delete(zipPath);
 	}
 	
+	/// <summary>
+	/// Gets a list of ffmpeg's supported formats from <c>ffmpeg -formats</c> command
+	/// </summary>
+	/// <returns>A list of formats supported by ffmpeg</returns>
 	public static async Task<List<string>> GetSupportedFormats()
 	{
 		var process = new Process
@@ -134,7 +163,7 @@ public class Ffmpeg
 			StartInfo = new ProcessStartInfo
 			{
 				FileName = "./ffmpeg.exe",
-				Arguments = $"-formats",
+				Arguments = "-formats",
 				RedirectStandardOutput = true,
 				CreateNoWindow = true,
 				UseShellExecute = false

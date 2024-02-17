@@ -24,6 +24,7 @@ internal static class Program
 		var selection = AnsiConsole.Prompt(
 			new SelectionPrompt<Options>
 			{
+				// displays enum member's Description attribute or its name if description is not present
 				Converter = option => option.AsString(EnumFormat.Description) ?? option.AsString()
 			}
 			.Title("What do you want to do?")
@@ -84,7 +85,7 @@ internal static class Program
 		var outputFileName = AnsiConsole.Prompt(
 			new TextPrompt<string>("Output file name:"));
 
-		await Ffmpeg.Concatenate(paths, outputFileName);
+		await Ffmpeg.Concat(paths, outputFileName);
 	}
 
 	private static async Task HandleChangeFormat()
@@ -115,6 +116,10 @@ internal static class Program
 		await Ffmpeg.RemoveAudio(file);
 	}
 
+	/// <summary>
+	/// Prompts a user for filename with validation.
+	/// </summary>
+	/// <returns><see cref="FileInfo">FileInfo</see> of the file user entered</returns>
 	private static FileInfo GetFileFromConsole()
 	{
 		var fileName = AnsiConsole.Prompt(
