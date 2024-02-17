@@ -1,19 +1,20 @@
 ﻿using System.Diagnostics;
-using System.Text;
 using System.IO.Compression;
+using System.Text;
 
 namespace VideoTools;
 
-public class Ffmpeg
+public static class Ffmpeg
 {
 	private static readonly string ExePath = Path.GetDirectoryName(Environment.ProcessPath) ?? ".";
-	
+
 	/// <summary>
-	/// Concatenates two or more videos of any supported format into one of any supported format.
+	///     Concatenates two or more videos of any supported format into one of any supported format.
 	/// </summary>
-	/// <param name="files"><see cref="IEnumerable{T}">IEnumerable</see> of <see cref="FileInfo">FileInfo</see>'s to be
-	///	concatenated. It is recommended that you use a collection that guarantees order as the function just uses a
-	/// <c>foreach</c> loop
+	/// <param name="files">
+	///     <see cref="IEnumerable{T}">IEnumerable</see> of <see cref="FileInfo">FileInfo</see>'s to be
+	///     concatenated. It is recommended that you use a collection that guarantees order as the function just uses a
+	///     <c>foreach</c> loop
 	/// </param>
 	/// <param name="output">Output filename (must include extension)</param>
 	public static async Task Concat(IEnumerable<FileInfo> files, string output)
@@ -52,7 +53,7 @@ public class Ffmpeg
 	}
 
 	/// <summary>
-	/// Converts a file from one format to another.
+	///     Converts a file from one format to another.
 	/// </summary>
 	/// <param name="file"><see cref="FileInfo">FileInfo</see> of the file to be converted</param>
 	/// <param name="outputFormat">Filename extension of the output</param>
@@ -71,7 +72,7 @@ public class Ffmpeg
 	}
 
 	/// <summary>
-	/// Extracts audio in MP3 format out of a video.
+	///     Extracts audio in MP3 format out of a video.
 	/// </summary>
 	/// <param name="file"><c>FileInfo</c> of the video</param>
 	public static async Task ExtractAudio(FileInfo file)
@@ -89,8 +90,8 @@ public class Ffmpeg
 	}
 
 	/// <summary>
-	/// Removes audio from a video file and saves it in the same directory, with the same extension and <c>-nosound</c>
-	/// added to its name.
+	///     Removes audio from a video file and saves it in the same directory, with the same extension and <c>-nosound</c>
+	///     added to its name.
 	/// </summary>
 	/// <param name="file"><see cref="FileInfo">FileInfo</see> of the file on which you want to perform the operation</param>
 	public static async Task RemoveAudio(FileInfo file)
@@ -100,7 +101,8 @@ public class Ffmpeg
 			StartInfo = new ProcessStartInfo
 			{
 				FileName = "./ffmpeg.exe",
-				Arguments = $"-i {file.FullName} -an {Path.GetFileNameWithoutExtension(file.FullName)}-nosound{Path.GetExtension(file.FullName)}"
+				Arguments =
+					$"-i {file.FullName} -an {Path.GetFileNameWithoutExtension(file.FullName)}-nosound{Path.GetExtension(file.FullName)}"
 			}
 		};
 		process.Start();
@@ -108,7 +110,7 @@ public class Ffmpeg
 	}
 
 	/// <summary>
-	/// Checks if ffmpeg is present in the process' directory.
+	///     Checks if ffmpeg is present in the process' directory.
 	/// </summary>
 	/// <returns>A boolean indicating whether ffmpeg exists in process' directory</returns>
 	public static bool IsInstalled()
@@ -117,14 +119,14 @@ public class Ffmpeg
 	}
 
 	/// <summary>
-	/// Downloads ffmpeg from github, and unzips the executables into process' directory.
+	///     Downloads ffmpeg from github, and unzips the executables into process' directory.
 	/// </summary>
 	public static async Task Download()
 	{
 		HttpClient httpClient = new();
 		var uri = new Uri(
 			"https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip");
-		
+
 		var response = await httpClient.GetAsync(uri);
 
 		// downloading zipped ffmpeg
@@ -137,7 +139,7 @@ public class Ffmpeg
 				fs.Dispose();
 				ZipFile.ExtractToDirectory(zipPath, ExePath);
 			});
-		
+
 		// moving ffmpeg executables to the root of the application
 		var unzippedPath = $"{ExePath}/ffmpeg-master-latest-win64-gpl";
 		var files = Directory.GetFiles($"{unzippedPath}/bin");
@@ -146,14 +148,14 @@ public class Ffmpeg
 			var fileName = Path.GetFileName(file);
 			File.Move(file, $"{ExePath}/{fileName}");
 		}
-		
+
 		// clean up
 		Directory.Delete(unzippedPath, true);
 		File.Delete(zipPath);
 	}
-	
+
 	/// <summary>
-	/// Gets a list of ffmpeg's supported formats from <c>ffmpeg -formats</c> command
+	///     Gets a list of ffmpeg's supported formats from <c>ffmpeg -formats</c> command
 	/// </summary>
 	/// <returns>A list of formats supported by ffmpeg</returns>
 	public static async Task<List<string>> GetSupportedFormats()
@@ -171,10 +173,7 @@ public class Ffmpeg
 		};
 		process.Start();
 		// skip first few lines as they are just explaining what means what
-		for (int i = 0; i < 4; i++)
-		{
-			await process.StandardOutput.ReadLineAsync();
-		}
+		for (var i = 0; i < 4; i++) await process.StandardOutput.ReadLineAsync();
 
 		List<string> formats = [];
 		while (!process.StandardOutput.EndOfStream)
@@ -184,6 +183,7 @@ public class Ffmpeg
 			// formatting this output is really funky, maybe there's a better way to do it
 			formats.Add(split[2] == "E" ? split[3] : split[2]);
 		}
+
 		await process.WaitForExitAsync();
 		return formats;
 	}

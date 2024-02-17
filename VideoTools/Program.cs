@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
-using Spectre.Console;
 using EnumsNET;
+using Spectre.Console;
 
 namespace VideoTools;
 
@@ -10,27 +10,25 @@ internal static class Program
 	{
 		// checks if ffmpeg is present in installation directory and if not, downloads it
 		if (!Ffmpeg.IsInstalled())
-		{
 			await AnsiConsole.Status()
-				.StartAsync("ffmpeg not found, installing...", ctx => 
+				.StartAsync("ffmpeg not found, installing...", ctx =>
 				{
 					ctx.Spinner(Spinner.Known.Aesthetic);
 					ctx.SpinnerStyle(Style.Parse("green"));
 					return Ffmpeg.Download();
 				});
-		}
-		
+
 		// initial prompt
 		var selection = AnsiConsole.Prompt(
 			new SelectionPrompt<Options>
-			{
-				// displays enum member's Description attribute or its name if description is not present
-				Converter = option => option.AsString(EnumFormat.Description) ?? option.AsString()
-			}
-			.Title("What do you want to do?")
-			.AddChoices([Options.Concatenate, Options.Reformat, Options.ExtractAudio, Options.RemoveAudio])
+				{
+					// displays enum member's Description attribute or its name if description is not present
+					Converter = option => option.AsString(EnumFormat.Description) ?? option.AsString()
+				}
+				.Title("What do you want to do?")
+				.AddChoices([Options.Concatenate, Options.Reformat, Options.ExtractAudio, Options.RemoveAudio])
 		);
-		
+
 		switch (selection)
 		{
 			case Options.Concatenate:
@@ -117,7 +115,7 @@ internal static class Program
 	}
 
 	/// <summary>
-	/// Prompts a user for filename with validation.
+	///     Prompts a user for filename with validation.
 	/// </summary>
 	/// <returns><see cref="FileInfo">FileInfo</see> of the file user entered</returns>
 	private static FileInfo GetFileFromConsole()
@@ -135,12 +133,10 @@ internal static class Program
 	// it's best that each member has a description attribute, this way the option is displayed in a user-friendly manner
 	private enum Options
 	{
-		[Description("Concatenate files")]
-		Concatenate,
-		[Description("Change format")]
-		Reformat,
-		[Description("Extract audio to mp3")]
-		ExtractAudio,
+		[Description("Concatenate files")] Concatenate,
+		[Description("Change format")] Reformat,
+		[Description("Extract audio to mp3")] ExtractAudio,
+
 		[Description("Remove audio from a video")]
 		RemoveAudio
 	}
