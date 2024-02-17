@@ -26,7 +26,7 @@ internal static class Program
 					Converter = option => option.AsString(EnumFormat.Description) ?? option.AsString()
 				}
 				.Title("What do you want to do?")
-				.AddChoices([Options.Concatenate, Options.Reformat, Options.ExtractAudio, Options.RemoveAudio])
+				.AddChoices([Options.Concatenate, Options.Reformat, Options.ExtractAudio, Options.RemoveAudio, Options.CreateGif])
 		);
 
 		switch (selection)
@@ -42,6 +42,9 @@ internal static class Program
 				break;
 			case Options.RemoveAudio:
 				await HandleRemoveAudio();
+				break;
+			case Options.CreateGif:
+				await HandleCreateGif();
 				break;
 		}
 	}
@@ -114,6 +117,13 @@ internal static class Program
 		await Ffmpeg.RemoveAudio(file);
 	}
 
+	private static async Task HandleCreateGif()
+	{
+		var file = GetFileFromConsole();
+
+		await Ffmpeg.ChangeFormat(file, "gif");
+	}
+
 	/// <summary>
 	///     Prompts a user for filename with validation.
 	/// </summary>
@@ -138,6 +148,8 @@ internal static class Program
 		[Description("Extract audio to mp3")] ExtractAudio,
 
 		[Description("Remove audio from a video")]
-		RemoveAudio
+		RemoveAudio,
+		[Description("Create a GIF")]
+		CreateGif
 	}
 }
