@@ -19,23 +19,17 @@ internal static class Program
 					return Ffmpeg.Download();
 				});
 		}
-
-		Console.WriteLine(Options.Concatenate.AsString(EnumFormat.Description));
 		
-		
-		// TODO map some strings to those options so it displays it in a more user-friendly manner
 		// initial prompt
 		var selection = AnsiConsole.Prompt(
-			new SelectionPrompt<Options>()
-				.Title("What do you want to do?")
-				.AddChoices([Options.Concatenate, Options.Reformat, Options.ExtractAudio, Options.RemoveAudio])
-				// .AddChoices([
-				// 	Options.Concatenate.AsString(EnumFormat.Description),
-				// 	Options.Reformat.AsString(EnumFormat.Description),
-				// 	Options.ExtractAudio.AsString(EnumFormat.Description),
-				// 	Options.RemoveAudio.AsString(EnumFormat.Description),
-				// ])
+			new SelectionPrompt<Options>
+			{
+				Converter = option => option.AsString(EnumFormat.Description) ?? option.AsString()
+			}
+			.Title("What do you want to do?")
+			.AddChoices([Options.Concatenate, Options.Reformat, Options.ExtractAudio, Options.RemoveAudio])
 		);
+		
 		switch (selection)
 		{
 			case Options.Concatenate:
@@ -133,6 +127,7 @@ internal static class Program
 		return new FileInfo(fileName);
 	}
 
+	// it's best that each member has a description attribute, this way the option is displayed in a user-friendly manner
 	private enum Options
 	{
 		[Description("Concatenate files")]
